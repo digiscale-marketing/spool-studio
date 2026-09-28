@@ -204,7 +204,8 @@ export function DayPlanTab({ clients }: { clients: Client[] }) {
 
       {designers.map((d) => {
         const mine = tasks.filter((t) => t.designerId === d.id)
-        const done = mine.filter((t) => t.status === "done").length
+        const doneUnits = mine.reduce((s, t) => s + Math.min(t.doneQty, t.qty), 0)
+        const totalUnits = mine.reduce((s, t) => s + t.qty, 0)
         const reels = mine.reduce((s, t) => s + (t.kind === "reel" ? t.qty : 0), 0)
         const posters = mine.reduce(
           (s, t) => s + (t.kind === "poster" ? t.qty : 0),
@@ -252,7 +253,7 @@ export function DayPlanTab({ clients }: { clients: Client[] }) {
               <div
                 className="h-full rounded-full bg-[var(--primary)]"
                 style={{
-                  width: `${mine.length > 0 ? Math.round((done / mine.length) * 100) : 0}%`,
+                  width: `${totalUnits > 0 ? Math.round((doneUnits / totalUnits) * 100) : 0}%`,
                 }}
               />
             </div>

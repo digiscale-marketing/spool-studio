@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useForm, useWatch } from "react-hook-form"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
@@ -141,6 +141,7 @@ export function AssetFormDialog({
   // ponytail: single id reuse per dialog session; full draft-cleanup queue if orphans recur at scale
   const [createdId, setCreatedId] = useState<string | null>(null)
   const [dayPlanId, setDayPlanId] = useState<string | null>(null)
+  const queryClient = useQueryClient()
   const { toast } = useToast()
 
   const statusOptions = useMemo(() => {
@@ -193,6 +194,14 @@ export function AssetFormDialog({
       t.clientId === watchedClientId &&
       (t.status === "pending" || t.status === "in_progress"),
   )
+
+  // Auto-link when there is exactly one open task — the designer no longer
+  // has to remember the picker for the common single-task case.
+  useEffect(() => {
+    if (dayPlanId === null && openTasks.length === 1) {
+      setDayPlanId(openTasks[0].id)
+    }
+  }, [dayPlanId, openTasks])
   const isLoadingOptions = clientsQuery.isLoading || usersQuery.isLoading
   const loadError =
     clientsQuery.error?.message ?? usersQuery.error?.message ?? null
@@ -282,6 +291,7 @@ export function AssetFormDialog({
             description: `${uploaded.title} was uploaded successfully.`,
           })
           clearApiClientCache()
+          queryClient.invalidateQueries({ queryKey: ["dayplans"] })
           router.refresh()
           onSaved?.(uploaded)
           setOpen(false)
