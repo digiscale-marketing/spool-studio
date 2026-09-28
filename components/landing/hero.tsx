@@ -9,7 +9,7 @@ import { siCloudflare, siPostgresql, siVercel } from "simple-icons"
 
 const EASE = [0.25, 0.1, 0.25, 1] as const
 
-const CLONE_CMD = "git clone https://github.com/IntegerAlex/spool-studio.git"
+const CLONE_CMD = "git clone https://github.com/GuixJoy/spool-studio.git"
 
 function ChromeMark({ size }: { size: number }) {
   return (
@@ -170,7 +170,7 @@ export function Hero() {
 
           <div className="mt-9 flex flex-wrap items-center gap-3">
             <a
-              href="https://github.com/IntegerAlex/spool-studio"
+              href="https://github.com/GuixJoy/spool-studio"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-full bg-[#ededed] px-6 py-2.5 text-[14px] font-medium !text-[#0a0a0a] transition-colors duration-150 hover:bg-white"

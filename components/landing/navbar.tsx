@@ -5,7 +5,7 @@ const NAV_LINKS = [
   { label: "Product", href: "/#product", external: false },
   {
     label: "Docs",
-    href: "https://github.com/IntegerAlex/spool-studio#readme",
+    href: "https://github.com/GuixJoy/spool-studio#readme",
     external: true,
   },
   { label: "Contact", href: "/#contact", external: false },
@@ -61,7 +61,7 @@ export function Navbar() {
         {/* Actions */}
         <div className="flex shrink-0 items-center gap-3 sm:gap-4">
           <a
-            href="https://github.com/IntegerAlex/spool-studio"
+            href="https://github.com/GuixJoy/spool-studio"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 rounded-full bg-[#eeeeee] px-4 py-1.5 text-[13px] font-medium !text-black no-underline transition-colors duration-200 hover:bg-white hover:no-underline"

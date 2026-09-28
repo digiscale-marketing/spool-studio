@@ -34,17 +34,17 @@ const columns: {
     links: [
       {
         label: "Documentation",
-        href: "https://github.com/IntegerAlex/spool-studio#readme",
+        href: "https://github.com/GuixJoy/spool-studio#readme",
         external: true,
       },
       {
         label: "Self-hosting guide",
-        href: "https://github.com/IntegerAlex/spool-studio#readme",
+        href: "https://github.com/GuixJoy/spool-studio#readme",
         external: true,
       },
       {
         label: "Changelog",
-        href: "https://github.com/IntegerAlex/spool-studio/releases",
+        href: "https://github.com/GuixJoy/spool-studio/releases",
         external: true,
       },
     ],
@@ -55,17 +55,17 @@ const columns: {
     links: [
       {
         label: "Source code",
-        href: "https://github.com/IntegerAlex/spool-studio",
+        href: "https://github.com/GuixJoy/spool-studio",
         external: true,
       },
       {
         label: "Issues",
-        href: "https://github.com/IntegerAlex/spool-studio/issues",
+        href: "https://github.com/GuixJoy/spool-studio/issues",
         external: true,
       },
       {
         label: "License",
-        href: "https://github.com/IntegerAlex/spool-studio/blob/main/LICENSE",
+        href: "https://github.com/GuixJoy/spool-studio/blob/main/LICENSE",
         external: true,
       },
     ],
@@ -134,7 +134,7 @@ export function Footer() {
                 review, approve, and publish — from one workspace.
               </p>
               <a
-                href="https://github.com/IntegerAlex/spool-studio"
+                href="https://github.com/GuixJoy/spool-studio"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/40 px-4 py-2 text-[13px] !text-white transition-colors hover:border-[#8ACDAE] hover:bg-white/10 hover:!text-[#8ACDAE]"
@@ -187,7 +187,7 @@ export function Footer() {
                 v1.0
               </span>
               <a
-                href="https://github.com/IntegerAlex/spool-studio"
+                href="https://github.com/GuixJoy/spool-studio"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 !text-white transition-colors hover:!text-[#8ACDAE]"
