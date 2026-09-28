@@ -51,7 +51,18 @@ function getMailgunConfig() {
 function formatTimestamp(timestamp: string | Date): string {
   // oxlint-disable-next-line anti-slop/no-runtime-typeof  // discriminate string|Date at I/O boundary
   const date = typeof timestamp === "string" ? new Date(timestamp) : timestamp
-  return Number.isNaN(date.getTime()) ? String(timestamp) : date.toISOString()
+  if (Number.isNaN(date.getTime())) return String(timestamp)
+  return (
+    date.toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    }) + " IST"
+  )
 }
 
 function formatSender(recipient?: NotificationRecipient): string {
