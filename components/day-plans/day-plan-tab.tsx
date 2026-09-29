@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -282,6 +283,17 @@ export function DayPlanTab({ clients }: { clients: Client[] }) {
                             · {t.referenceIds.length} ref
                             {t.referenceIds.length > 1 ? "s" : ""}
                           </span>
+                        )}
+                        {t.resultAssetId && (
+                          <>
+                            {" · "}
+                            <Link
+                              href={`/dashboard/assets/${t.resultAssetId}`}
+                              className="text-[var(--primary)] hover:underline"
+                            >
+                              View content →
+                            </Link>
+                          </>
                         )}
                       </p>
                     </div>
