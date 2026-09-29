@@ -22,6 +22,14 @@ export type AssetQuickFilter =
   | "needs_review"
   | "failed_uploads"
   | "recently_uploaded"
+  | "commented"
+
+export type CommentRecencyFilter =
+  | "any"
+  | "last_hour"
+  | "last_4_hours"
+  | "yesterday"
+  | "last_7_days"
 
 export interface AssetDiscoveryFilters {
   searchQuery: string
@@ -34,11 +42,31 @@ export interface AssetDiscoveryFilters {
   metadataFilter: AssetMetadataFilter
   quickFilters: AssetQuickFilter[]
   sortMode: AssetSortMode
+  commentRecency: CommentRecencyFilter
 }
 
 export interface AssetDiscoveryContext {
   clientsById: Map<string, Client>
   usersById: Map<string, User>
+  commentedAtByAssetId?: Map<string, number>
+}
+
+export const commentRecencyHours: Record<
+  Exclude<CommentRecencyFilter, "any">,
+  number
+> = {
+  last_hour: 1,
+  last_4_hours: 4,
+  yesterday: 24,
+  last_7_days: 24 * 7,
+}
+
+export const commentRecencyLabels: Record<CommentRecencyFilter, string> = {
+  any: "Any time",
+  last_hour: "Last hour",
+  last_4_hours: "Last 4 hours",
+  yesterday: "Yesterday",
+  last_7_days: "Last 7 days",
 }
 
 export const assetSortLabels = {
@@ -70,6 +98,7 @@ export const assetQuickFilterLabels = {
   needs_review: "Needs Review",
   failed_uploads: "Failed Uploads",
   recently_uploaded: "Recently Uploaded",
+  commented: "With Comments",
 } satisfies Record<AssetQuickFilter, string>
 
 const assetQuickFilterEmptyStateLabels = {
@@ -79,6 +108,7 @@ const assetQuickFilterEmptyStateLabels = {
   needs_review: "assets needing review",
   failed_uploads: "failed upload assets",
   recently_uploaded: "recently uploaded assets",
+  commented: "commented assets",
 } satisfies Record<AssetQuickFilter, string>
 
 function normalizeText(value: string): string {
@@ -164,6 +194,7 @@ function hasMetadata(asset: Asset): boolean {
 function matchesQuickFilter(
   asset: Asset,
   quickFilter: AssetQuickFilter,
+  context: AssetDiscoveryContext,
 ): boolean {
   switch (quickFilter) {
     case "videos":
@@ -181,6 +212,8 @@ function matchesQuickFilter(
       return asset.status === "failed"
     case "recently_uploaded":
       return isWithinDays(asset, 7)
+    case "commented":
+      return context.commentedAtByAssetId?.has(asset.id) ?? false
     default:
       return true
   }
@@ -263,14 +296,30 @@ function matchesStatus(asset: Asset, status: AssetStatus | "all"): boolean {
 function matchesQuickFilters(
   asset: Asset,
   quickFilters: AssetQuickFilter[],
+  context: AssetDiscoveryContext,
 ): boolean {
   if (quickFilters.length === 0) {
     return true
   }
 
   return quickFilters.some((quickFilter) =>
-    matchesQuickFilter(asset, quickFilter),
+    matchesQuickFilter(asset, quickFilter, context),
   )
+}
+
+function matchesCommentRecency(
+  asset: Asset,
+  commentRecency: CommentRecencyFilter,
+  context: AssetDiscoveryContext,
+): boolean {
+  if (commentRecency === "any") {
+    return true
+  }
+  const latest = context.commentedAtByAssetId?.get(asset.id)
+  if (latest == null) {
+    return false
+  }
+  return Date.now() - latest <= commentRecencyHours[commentRecency] * 3_600_000
 }
 
 export function filterAssets(
@@ -291,7 +340,8 @@ export function filterAssets(
         filters.maxFileSizeBytes,
       ) &&
       matchesMetadataFilter(asset, filters.metadataFilter) &&
-      matchesQuickFilters(asset, filters.quickFilters)
+      matchesQuickFilters(asset, filters.quickFilters, context) &&
+      matchesCommentRecency(asset, filters.commentRecency, context)
     )
   })
 }
@@ -366,6 +416,10 @@ export function countActiveFilters(filters: AssetDiscoveryFilters): number {
   }
 
   if (filters.metadataFilter !== "all") {
+    count += 1
+  }
+
+  if (filters.commentRecency !== "any") {
     count += 1
   }
 

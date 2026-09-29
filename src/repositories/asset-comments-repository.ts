@@ -1,4 +1,4 @@
-import { asc, eq } from "drizzle-orm"
+import { asc, eq, max } from "drizzle-orm"
 import { db } from "@/db"
 import { assetComments } from "@/db/schema"
 
@@ -21,6 +21,25 @@ export async function listCommentsByAssetId(
       ? await query.limit(Math.max(limit, 1)).offset(Math.max(offset ?? 0, 0))
       : await query
   return result
+}
+
+/**
+ * Latest comment timestamp per asset, for the "commented" discovery filter.
+ * One grouped query — no per-asset fan-out.
+ */
+export async function getLatestCommentAtByAsset(): Promise<
+  Array<{ assetId: string; latestAt: Date }>
+> {
+  const rows = await db
+    .select({
+      assetId: assetComments.asset_id,
+      latestAt: max(assetComments.created_at),
+    })
+    .from(assetComments)
+    .groupBy(assetComments.asset_id)
+  return rows
+    .filter((r) => r.latestAt !== null)
+    .map((r) => ({ assetId: r.assetId, latestAt: r.latestAt as Date }))
 }
 
 export async function getCommentById(

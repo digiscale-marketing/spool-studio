@@ -783,6 +783,12 @@ export const assetsApi = {
     return asset ? hydrateAsset(asset) : null
   },
 
+  getCommentActivity: async (): Promise<Record<string, string>> => {
+    return fetchJsonDeduped<Record<string, string>>(
+      "/api/assets/comment-activity",
+    )
+  },
+
   getSummaryById: async (id: string): Promise<Asset | null> => {
     const asset = await fetchJsonNullableDeduped<Asset>(
       `/api/assets/${id}/summary`,

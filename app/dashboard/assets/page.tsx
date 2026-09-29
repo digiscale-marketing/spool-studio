@@ -53,10 +53,12 @@ import {
   type AssetQuickFilter,
   type AssetSortMode,
   type AssetUploadedDateFilter,
+  type CommentRecencyFilter,
   assetMetadataLabels,
   assetQuickFilterLabels,
   assetSortLabels,
   assetUploadedDateLabels,
+  commentRecencyLabels,
   countActiveFilters,
   filterAssets,
   getDiscoveryEmptyState,
@@ -106,12 +108,14 @@ const _quickFilterOptions: AssetQuickFilter[] = [
   "needs_review",
   "failed_uploads",
   "recently_uploaded",
+  "commented",
 ]
 const defaultStatus: AssetStatus | "all" = "all"
 const defaultAssetType: AssetType | "all" = "all"
 const defaultUploadedDate: AssetUploadedDateFilter = "all"
 const defaultMetadataFilter: AssetMetadataFilter = "all"
 const defaultSortMode: AssetSortMode = "newest"
+const defaultCommentRecency: CommentRecencyFilter = "any"
 const quickFilterChips: Array<AssetQuickFilter | "all"> = [
   "all",
   "videos",
@@ -120,6 +124,7 @@ const quickFilterChips: Array<AssetQuickFilter | "all"> = [
   "needs_review",
   "failed_uploads",
   "recently_uploaded",
+  "commented",
 ]
 
 function parseSizeMb(value: string): number | null {
@@ -340,6 +345,8 @@ export default function AssetsPage() {
   const [metadataFilter, setMetadataFilter] = useState<AssetMetadataFilter>(
     defaultMetadataFilter,
   )
+  const [commentRecency, setCommentRecency] =
+    useState<CommentRecencyFilter>(defaultCommentRecency)
   const [activeQuickFilters, setActiveQuickFilters] = useState<
     AssetQuickFilter[]
   >([])
@@ -382,9 +389,11 @@ export default function AssetsPage() {
       metadataFilter,
       quickFilters: activeQuickFilters,
       sortMode,
+      commentRecency,
     }),
     [
       activeQuickFilters,
+      commentRecency,
       debouncedSearchQuery,
       metadataFilter,
       maxFileSizeMb,
@@ -397,9 +406,26 @@ export default function AssetsPage() {
     ],
   )
 
+  const commentedActive =
+    activeQuickFilters.includes("commented") || commentRecency !== "any"
+  const { data: commentActivity } = useQuery({
+    queryKey: ["assets", "comment-activity"],
+    queryFn: () => assetsApi.getCommentActivity(),
+    enabled: commentedActive,
+    staleTime: 60_000,
+  })
+  const commentedAtByAssetId = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const [id, iso] of Object.entries(commentActivity ?? {})) {
+      const time = new Date(iso).getTime()
+      if (Number.isFinite(time)) map.set(id, time)
+    }
+    return map
+  }, [commentActivity])
+
   const queryContext = useMemo<AssetDiscoveryContext>(
-    () => ({ clientsById, usersById }),
-    [clientsById, usersById],
+    () => ({ clientsById, usersById, commentedAtByAssetId }),
+    [clientsById, usersById, commentedAtByAssetId],
   )
 
   const visibleAssets = useMemo(() => {
@@ -474,6 +500,7 @@ export default function AssetsPage() {
     setMetadataFilter(defaultMetadataFilter)
     setActiveQuickFilters([])
     setSortMode(defaultSortMode)
+    setCommentRecency(defaultCommentRecency)
   }
 
 
@@ -785,8 +812,28 @@ export default function AssetsPage() {
         />
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <div className="flex flex-wrap items-center gap-2 pb-1">
         <QuickFilters activeQuickFilters={activeQuickFilters} onToggle={toggleQuickFilter} onClearAll={() => setActiveQuickFilters([])} />
+        {activeQuickFilters.includes("commented") && (
+          <Select
+            value={commentRecency}
+            onValueChange={(value) =>
+// SAFETY: this cast is safe because the value already conforms to the asserted type.
+              setCommentRecency(value as CommentRecencyFilter)
+            }
+          >
+            <SelectTrigger className="h-7 w-auto gap-2 rounded-full border-[rgba(255,255,255,0.08)] bg-transparent px-3 text-[12px] text-[#a1a1aa] shadow-none">
+              <SelectValue placeholder="Commented when" />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(commentRecencyLabels).map(([value, label]) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
       {visibleAssets.length > 0 ? (
