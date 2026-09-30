@@ -14,9 +14,34 @@ import { useToast } from "@/hooks/use-toast"
 import { portalApi, type PortalTokenInfo } from "@/lib/api-client"
 
 function portalLink(token: string): string {
+  // Current host wins: the build-time URL goes stale across deploys.
   const base =
-    process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin ?? ""
+    (typeof window !== "undefined" && window.location.origin) ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    ""
   return `${base.replace(/\/+$/, "")}/${token}`
+}
+
+async function copyText(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text)
+    return true
+  } catch {
+    // Clipboard API needs focus + secure context — legacy fallback.
+    try {
+      const area = document.createElement("textarea")
+      area.value = text
+      area.style.position = "fixed"
+      area.style.opacity = "0"
+      document.body.appendChild(area)
+      area.select()
+      const ok = document.execCommand("copy")
+      document.body.removeChild(area)
+      return ok
+    } catch {
+      return false
+    }
+  }
 }
 
 export function SharePortalDialog({
@@ -59,13 +84,11 @@ export function SharePortalDialog({
 
   const copy = async () => {
     if (!token?.token) return
-    try {
-      await navigator.clipboard.writeText(portalLink(token.token))
-      setCopied(true)
-      toast({ title: "Client link copied" })
-    } catch {
-      toast({ title: "Copy failed — select the link manually" })
-    }
+    const ok = await copyText(portalLink(token.token))
+    setCopied(ok)
+    toast(
+      ok ? { title: "Client link copied" } : { title: "Select the link below and copy it manually" },
+    )
   }
 
   return (
@@ -88,9 +111,12 @@ export function SharePortalDialog({
           <div className="space-y-3">
             <div className="flex items-center gap-2 rounded-md border border-[rgba(255,255,255,0.08)] bg-[#1a1a1a] px-3 py-2">
               <Link2 className="h-4 w-4 shrink-0 text-[#71717a]" />
-              <span className="truncate font-mono text-[12px] text-white">
-                {portalLink(token.token)}
-              </span>
+              <input
+                readOnly
+                value={portalLink(token.token)}
+                onFocus={(e) => e.target.select()}
+                className="w-full truncate bg-transparent font-mono text-[12px] text-white outline-none"
+              />
             </div>
             <p className="text-[12px] text-[#71717a]">
               Expires {new Date(token.expires_at).toLocaleDateString()}. The
