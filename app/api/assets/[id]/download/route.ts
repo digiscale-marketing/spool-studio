@@ -28,7 +28,7 @@ function downloadFileName(
   return `${safe}.${extension}`
 }
 
-export async function GET(_request: Request, context: RouteContext) {
+export async function GET(request: Request, context: RouteContext) {
   try {
     await requireUser()
 
@@ -43,10 +43,15 @@ export async function GET(_request: Request, context: RouteContext) {
       throw ApiError.notFound("No file attached to this asset")
     }
 
+    // ?view=1 streams inline for browser preview; default attaches with
+    // the asset filename so downloads save with the right name.
+    const view = new URL(request.url).searchParams.get("view") === "1"
     const url = await getPresignedDownloadUrl(
       asset.drive_file_id,
       3600,
-      downloadFileName(asset.title, asset.file_extension, asset.mime_type),
+      view
+        ? undefined
+        : downloadFileName(asset.title, asset.file_extension, asset.mime_type),
     )
     return NextResponse.redirect(url)
   } catch (error) {

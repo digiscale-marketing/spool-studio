@@ -136,6 +136,18 @@ export default function AssetDetailPage() {
     queryClient.invalidateQueries({ queryKey: ["asset", assetId] })
   }
 
+  const copyViewLink = async () => {
+    if (!asset) return
+    const url = `${window.location.origin}/api/assets/${asset.id}/download?view=1`
+    try {
+      await navigator.clipboard.writeText(url)
+      toast({ title: "Link copied" })
+    } catch {
+      // Clipboard API needs a secure context — fall back to a prompt box.
+      window.prompt("Copy this link:", url)
+    }
+  }
+
   function refreshRevisions() {
     setRevisionRefreshKey((prev) => prev + 1)
   }
@@ -491,10 +503,7 @@ export default function AssetDetailPage() {
                     variant="outline"
                     className="h-10 w-full border-[rgba(255,255,255,0.1)] bg-transparent px-3 text-[13px] text-white hover:bg-[rgba(255,255,255,0.06)] sm:h-9 sm:w-auto"
                     onClick={() => {
-                      void navigator.clipboard.writeText(
-                        `${window.location.origin}/api/assets/${asset.id}/download`,
-                      )
-                      toast({ title: "Link copied" })
+                      void copyViewLink()
                     }}
                   >
                     <Copy className="mr-2 h-4 w-4" />
@@ -799,10 +808,7 @@ export default function AssetDetailPage() {
                     variant="outline"
                     className="h-9 border-[rgba(255,255,255,0.1)] bg-transparent px-3 text-[13px] text-white hover:bg-[rgba(255,255,255,0.06)]"
                     onClick={() => {
-                      void navigator.clipboard.writeText(
-                        `${window.location.origin}/api/assets/${asset.id}/download`,
-                      )
-                      toast({ title: "Link copied" })
+                      void copyViewLink()
                     }}
                   >
                     <Copy className="mr-2 h-4 w-4" />
