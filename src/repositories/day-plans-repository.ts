@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, lte } from "drizzle-orm"
+import { and, desc, eq, gte, inArray, lt, lte } from "drizzle-orm"
 import { db } from "@/db"
 import { type DayPlan, type NewDayPlan, dayPlans } from "@/db/schema"
 
@@ -69,4 +69,19 @@ export async function deleteDayPlan(id: string): Promise<void> {
 
 export async function deleteDayPlansByClientId(clientId: string): Promise<void> {
   await db.delete(dayPlans).where(eq(dayPlans.client_id, clientId))
+}
+
+export async function listOpenTasksBefore(
+  date: string,
+): Promise<DbDayPlan[]> {
+  return db
+    .select()
+    .from(dayPlans)
+    .where(
+      and(
+        lt(dayPlans.date, date),
+        inArray(dayPlans.status, ["pending", "in_progress"]),
+      ),
+    )
+    .orderBy(dayPlans.date)
 }

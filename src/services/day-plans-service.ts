@@ -6,6 +6,7 @@ import {
   insertDayPlan,
   listDayPlansByDate,
   listDayPlansByDesignerRange,
+  listOpenTasksBefore,
   updateDayPlan,
 } from "@/repositories/day-plans-repository"
 import { getClients } from "@/services/clients-service"
@@ -76,6 +77,17 @@ export async function listDesignerHistory(
     throw new Error("Forbidden")
   }
   return (await listDayPlansByDesignerRange(designerId, from, to)).map(mapRow)
+}
+
+export async function listOverdue(date: string): Promise<DayPlan[]> {
+  const user = await getCurrentUser()
+  if (!user) throw new Error("Unauthorized")
+  const rows = await listOpenTasksBefore(date)
+  const scoped =
+    user.role === "admin"
+      ? rows
+      : rows.filter((r) => r.designer_id === user.id)
+  return scoped.map(mapRow)
 }
 
 export async function createDayPlan(

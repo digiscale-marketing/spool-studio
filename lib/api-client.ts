@@ -1377,6 +1377,13 @@ export const dayPlansApi = {
     return rows.map(hydrateDayPlan)
   },
 
+  overdue: async (before: string): Promise<DayPlan[]> => {
+    const rows = await fetchJson<DayPlan[]>(
+      `/api/day-plans?overdueBefore=${encodeURIComponent(before)}`,
+    )
+    return rows.map(hydrateDayPlan)
+  },
+
   create: async (input: CreateDayPlanInput): Promise<DayPlan> => {
     const created = await fetchJson<DayPlan>("/api/day-plans", {
       method: "POST",

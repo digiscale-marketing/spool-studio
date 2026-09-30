@@ -7,6 +7,7 @@ import {
   createDayPlan,
   listDayPlans,
   listDesignerHistory,
+  listOverdue,
 } from "@/services/day-plans-service"
 
 const dateString = z
@@ -19,6 +20,12 @@ export async function GET(request: Request) {
     const designerId = searchParams.get("designerId") ?? undefined
     const from = searchParams.get("from")
     const to = searchParams.get("to")
+    const overdueBefore = searchParams.get("overdueBefore")
+
+    if (overdueBefore) {
+      const rows = await listOverdue(overdueBefore)
+      return NextResponse.json({ data: rows })
+    }
 
     if (from && to && designerId) {
       const rows = await listDesignerHistory(designerId, from, to)

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import Link from "next/link"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { Badge } from "@/components/ui/badge"
@@ -58,6 +58,20 @@ export function DayPlanTab({ clients }: { clients: Client[] }) {
     queryFn: () => dayPlansApi.list(date),
   })
   const tasks = tasksQuery.data ?? []
+
+  const overdueQuery = useQuery({
+    queryKey: ["dayplans-overdue", date],
+    queryFn: () => dayPlansApi.overdue(date),
+  })
+  const overdueByDesigner = useMemo(() => {
+    const map = new Map<string, DayPlan[]>()
+    for (const t of overdueQuery.data ?? []) {
+      const list = map.get(t.designerId) ?? []
+      list.push(t)
+      map.set(t.designerId, list)
+    }
+    return map
+  }, [overdueQuery.data])
 
   const recsQuery = useQuery({
     queryKey: ["dayplans-recs", date],
@@ -145,6 +159,89 @@ export function DayPlanTab({ clients }: { clients: Client[] }) {
 
   const clientName = (id: string) =>
     clients.find((c) => c.id === id)?.name ?? "Client"
+
+  const renderTask = (t: DayPlan) => (
+    <div
+      key={t.id}
+      className="flex items-center justify-between gap-3 rounded-lg border border-[rgba(255,255,255,0.05)] bg-[#1a1a1a] p-3"
+    >
+      <div className="min-w-0">
+        <p className="text-[13px] text-white">
+          <span className="mr-1.5 rounded border border-[rgba(255,255,255,0.12)] px-1.5 py-0.5 font-mono text-[10px] text-[#a1a1aa]">
+            {t.date}
+          </span>
+          {t.qty} {t.kind}
+          {t.qty > 1 ? "s" : ""} · {clientName(t.clientId)}
+          {t.qty > 1 && (
+            <span className="text-[#71717a]">
+              {" "}
+              · {t.doneQty}/{t.qty} uploaded
+            </span>
+          )}
+          {t.referenceIds.length > 0 && (
+            <span className="text-[#71717a]">
+              {" "}
+              · {t.referenceIds.length} ref
+              {t.referenceIds.length > 1 ? "s" : ""}
+            </span>
+          )}
+          {t.resultAssetId && (
+            <>
+              {" · "}
+              <Link
+                href={`/dashboard/assets/${t.resultAssetId}`}
+                className="text-[var(--primary)] hover:underline"
+              >
+                View content →
+              </Link>
+            </>
+          )}
+        </p>
+      </div>
+      <div className="flex shrink-0 items-center gap-2">
+        <Badge className={cn("border-0 text-[10px]", statusColor[t.status])}>
+          {t.status.replace("_", " ")}
+        </Badge>
+        {isAdmin && (
+          <>
+            {t.status !== "done" && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => advance(t)}
+                className="h-7 border-[rgba(255,255,255,0.08)] bg-transparent text-[11px] text-white hover:bg-[rgba(255,255,255,0.06)]"
+              >
+                {t.status === "pending" ? "Start" : "Done"}
+              </Button>
+            )}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setEditing(t)
+                setDialogOpen(true)
+              }}
+              className="h-7 border-[rgba(255,255,255,0.08)] bg-transparent text-[11px] text-white hover:bg-[rgba(255,255,255,0.06)]"
+            >
+              Edit
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => remove(t.id)}
+              className="h-7 border-[rgba(255,255,255,0.08)] bg-transparent text-[11px] text-red-400 hover:bg-[rgba(255,255,255,0.06)]"
+            >
+              ×
+            </Button>
+          </>
+        )}
+      </div>
+    </div>
+  )
+
+  const renderTaskList = (list: DayPlan[]) => (
+    <div className="space-y-2">{list.map((t) => renderTask(t))}</div>
+  )
 
   return (
     <div className="space-y-6">
@@ -259,91 +356,19 @@ export function DayPlanTab({ clients }: { clients: Client[] }) {
                 }}
               />
             </div>
+            {(overdueByDesigner.get(d.id) ?? []).length > 0 && (
+              <div className="mb-3 rounded-lg border border-amber-500/25 bg-amber-500/5 p-3">
+                <p className="mb-2 text-[11px] font-medium uppercase tracking-wider text-amber-300">
+                  Pending from previous days (
+                  {(overdueByDesigner.get(d.id) ?? []).length})
+                </p>
+                {renderTaskList(overdueByDesigner.get(d.id) ?? [])}
+              </div>
+            )}
             {mine.length === 0 ? (
               <p className="text-[12px] text-[#71717a]">No tasks this day.</p>
             ) : (
-              <div className="space-y-2">
-                {mine.map((t) => (
-                  <div
-                    key={t.id}
-                    className="flex items-center justify-between gap-3 rounded-lg border border-[rgba(255,255,255,0.05)] bg-[#1a1a1a] p-3"
-                  >
-                    <div className="min-w-0">
-                      <p className="text-[13px] text-white">
-                        {t.qty} {t.kind}
-                        {t.qty > 1 ? "s" : ""} · {clientName(t.clientId)}
-                        {t.qty > 1 && (
-                          <span className="text-[#71717a]">
-                            {" "}
-                            · {t.doneQty}/{t.qty} uploaded
-                          </span>
-                        )}
-                        {t.referenceIds.length > 0 && (
-                          <span className="text-[#71717a]">
-                            {" "}
-                            · {t.referenceIds.length} ref
-                            {t.referenceIds.length > 1 ? "s" : ""}
-                          </span>
-                        )}
-                        {t.resultAssetId && (
-                          <>
-                            {" · "}
-                            <Link
-                              href={`/dashboard/assets/${t.resultAssetId}`}
-                              className="text-[var(--primary)] hover:underline"
-                            >
-                              View content →
-                            </Link>
-                          </>
-                        )}
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <Badge
-                        className={cn(
-                          "border-0 text-[10px]",
-                          statusColor[t.status],
-                        )}
-                      >
-                        {t.status.replace("_", " ")}
-                      </Badge>
-                      {isAdmin && (
-                        <>
-                          {t.status !== "done" && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => advance(t)}
-                              className="h-7 border-[rgba(255,255,255,0.08)] bg-transparent text-[11px] text-white hover:bg-[rgba(255,255,255,0.06)]"
-                            >
-                              {t.status === "pending" ? "Start" : "Done"}
-                            </Button>
-                          )}
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setEditing(t)
-                              setDialogOpen(true)
-                            }}
-                            className="h-7 border-[rgba(255,255,255,0.08)] bg-transparent text-[11px] text-white hover:bg-[rgba(255,255,255,0.06)]"
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => remove(t.id)}
-                            className="h-7 border-[rgba(255,255,255,0.08)] bg-transparent text-[11px] text-red-400 hover:bg-[rgba(255,255,255,0.06)]"
-                          >
-                            ×
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
+              renderTaskList(mine)
             )}
           </Card>
         )
