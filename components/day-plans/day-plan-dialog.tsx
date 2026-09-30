@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import { clientReferencesApi, dayPlansApi } from "@/lib/api-client"
+import { formatDateKey } from "@/lib/calendar-utils"
 import type { Client, DayPlan, User } from "@/types/index"
 
 interface DayPlanDialogProps {
@@ -35,9 +36,9 @@ interface ClientWork {
 }
 
 function yesterdayOf(date: string): string {
-  const d = new Date(date + "T00:00:00")
+  const d = new Date(date + "T12:00:00")
   d.setDate(d.getDate() - 1)
-  return d.toISOString().slice(0, 10)
+  return formatDateKey(d)
 }
 
 export function DayPlanDialog({
@@ -158,6 +159,21 @@ export function DayPlanDialog({
 
   const clientName = (id: string) =>
     clients.find((c) => c.id === id)?.name ?? "Client"
+
+  const deletePending = async (task: DayPlan) => {
+    try {
+      await dayPlansApi.remove(task.id)
+      onSaved()
+      pendingQuery.refetch()
+      dayQuery.refetch()
+      toast({ title: "Pending task deleted" })
+    } catch (error) {
+      toast({
+        title: error instanceof Error ? error.message : "Failed to delete",
+        variant: "destructive",
+      })
+    }
+  }
 
   const carryForward = async (task: DayPlan) => {
     try {
@@ -365,9 +381,9 @@ export function DayPlanDialog({
           {!isEditing && designerId !== "" && pending.length > 0 && (
             <div className="space-y-1.5">
               <label className="text-[11px] font-medium text-[#a1a1aa] uppercase tracking-wider">
-                Still pending — tap to carry into {date}
+                Still pending ({pending.length}) — tap to carry into {date}
               </label>
-              <div className="max-h-32 space-y-1 overflow-y-auto rounded-md border border-[rgba(255,255,255,0.08)] bg-[#1a1a1a] p-2">
+              <div className="max-h-56 space-y-1 overflow-y-auto rounded-md border border-[rgba(255,255,255,0.08)] bg-[#1a1a1a] p-2">
                 {pending.map((t) => (
                   <div
                     key={t.id}
@@ -376,14 +392,25 @@ export function DayPlanDialog({
                     <span className="truncate">
                       {t.date} · {t.qty} {t.kind}
                       {t.qty > 1 ? "s" : ""} · {clientName(t.clientId)}
+                      {t.doneQty > 0 && ` · ${t.doneQty}/${t.qty} done`}
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => carryForward(t)}
-                      className="shrink-0 rounded border border-[rgba(255,255,255,0.12)] px-2 py-0.5 text-[11px] text-white hover:bg-[rgba(255,255,255,0.06)]"
-                    >
-                      + Add
-                    </button>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => carryForward(t)}
+                        className="rounded border border-[rgba(255,255,255,0.12)] px-2 py-0.5 text-[11px] text-white hover:bg-[rgba(255,255,255,0.06)]"
+                      >
+                        + Add
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => deletePending(t)}
+                        title="Delete pending task"
+                        className="rounded border border-[rgba(255,255,255,0.12)] px-2 py-0.5 text-[11px] text-red-400 hover:bg-red-500/10"
+                      >
+                        ×
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

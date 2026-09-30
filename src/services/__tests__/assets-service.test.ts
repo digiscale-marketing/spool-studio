@@ -778,6 +778,11 @@ describe("finalizeAssetUpload", () => {
 
     expect(mocks.insertAssetRevision).toHaveBeenCalled()
     expect(result.upload.uploadStatus).toBe("uploaded")
+    // Fresh uploads always land as uploaded — draft is manual-only.
+    expect(mocks.updateAsset).toHaveBeenCalledWith(
+      "asset-1",
+      expect.objectContaining({ status: "uploaded" }),
+    )
     expect(result.upload.r2Key).toBe(
       "clients/client-1/assets/asset-1/test.png",
     )
@@ -805,6 +810,10 @@ describe("finalizeAssetUpload", () => {
       expect.objectContaining({ revisionVersion: 2 }),
     )
     expect(mocks.sendAssetUploadNotification).not.toHaveBeenCalled()
+    // Revision uploads preserve the admin's workflow state (incl. draft).
+    for (const call of mocks.updateAsset.mock.calls) {
+      expect(call[1]).not.toMatchObject({ status: "draft" })
+    }
   })
 })
 

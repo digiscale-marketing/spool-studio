@@ -14,11 +14,12 @@ import {
   usersApi,
 } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
+import { formatDateKey } from "@/lib/calendar-utils"
 import type { Client, DayPlan, User } from "@/types/index"
 import { DayPlanDialog } from "./day-plan-dialog"
 
 function todayStr(): string {
-  return new Date().toISOString().slice(0, 10)
+  return formatDateKey(new Date())
 }
 
 const statusColor: Record<DayPlan["status"], string> = {

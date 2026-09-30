@@ -41,6 +41,7 @@ import {
   dayPlansApi,
   usersApi,
 } from "@/lib/api-client"
+import { formatDateKey } from "@/lib/calendar-utils"
 import {
   assetEditorStatusLabels,
   assetStatusLabels,
@@ -182,7 +183,7 @@ export function AssetFormDialog({
   })
   const clients = clientsQuery.data ?? []
   const users = usersQuery.data ?? []
-  const todayKey = new Date().toISOString().slice(0, 10)
+  const todayKey = formatDateKey(new Date())
   const dayPlansQuery = useQuery({
     queryKey: ["dayplans", todayKey, watchedClientId],
     queryFn: () => dayPlansApi.list(todayKey),
@@ -264,10 +265,18 @@ export function AssetFormDialog({
       } as const
 
       // Retry in the same dialog reuses the already-created row instead of
-      // minting a new numbered draft per attempt.
+      // minting a new numbered draft per attempt — and must not touch its
+      // status (a re-save after upload would drag it back to draft).
       const targetId = mode === "edit" ? (asset?.id ?? "") : (createdId ?? "")
       const saved = targetId
-        ? await assetsApi.update(targetId, payload)
+        ? await assetsApi.update(targetId, {
+            clientId: values.clientId,
+            title: values.title ?? "",
+            type: values.type,
+            ...(mode === "edit" ? { status: values.status } : {}),
+            assignedTo: values.assignedTo ? values.assignedTo : null,
+            scheduledAt: toIsoString(values.scheduledAt),
+          })
         : await assetsApi.create(payload)
       if (mode === "create" && !createdId) setCreatedId(saved.id)
 
