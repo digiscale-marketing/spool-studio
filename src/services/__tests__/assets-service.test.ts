@@ -37,6 +37,7 @@ const mocks = vi.hoisted(() => ({
   logAuditEvent: vi.fn(),
   markDayPlanDone: vi.fn(),
   getDayPlanById: vi.fn(),
+  findOpenTaskForUpload: vi.fn(),
   getActiveCycleForClientService: vi.fn(),
   getNextAssetNumber: vi.fn(),
   generateAssetTitle: vi.fn(),
@@ -116,6 +117,7 @@ vi.mock("@/services/day-plans-service", () => ({
 // oxlint-disable-next-line anti-slop/no-module-mocking  // test mock
 vi.mock("@/repositories/day-plans-repository", () => ({
   getDayPlanById: mocks.getDayPlanById,
+  findOpenTaskForUpload: mocks.findOpenTaskForUpload,
 }))
 // oxlint-disable-next-line anti-slop/no-module-mocking  // test mock
 vi.mock("@/services/numbering-service", () => ({
@@ -814,6 +816,20 @@ describe("finalizeAssetUpload", () => {
     for (const call of mocks.updateAsset.mock.calls) {
       expect(call[1]).not.toMatchObject({ status: "draft" })
     }
+  })
+
+  it("auto-matches an untagged upload to the oldest open task", async () => {
+    mocks.getAssetById.mockResolvedValue(dbAsset({ status: "draft" }))
+    mocks.listAssetRevisionsByAssetId.mockResolvedValue([])
+    mocks.findOpenTaskForUpload.mockResolvedValue({ id: "task-9" })
+
+    await finalizeAssetUpload("asset-1", {
+      fileName: "test.png",
+      uploadResult: uploadResult(),
+    })
+
+    expect(mocks.findOpenTaskForUpload).toHaveBeenCalled()
+    expect(mocks.markDayPlanDone).toHaveBeenCalledWith("task-9", "asset-1")
   })
 })
 

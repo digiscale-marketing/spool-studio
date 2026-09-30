@@ -71,6 +71,33 @@ export async function deleteDayPlansByClientId(clientId: string): Promise<void> 
   await db.delete(dayPlans).where(eq(dayPlans.client_id, clientId))
 }
 
+/**
+ * Oldest open task for an uploader + client + kind with remaining qty.
+ * Lets uploads tick day plans even when the client never sent dayPlanId.
+ */
+export async function findOpenTaskForUpload(
+  designerId: string,
+  clientId: string,
+  kind: string,
+): Promise<DbDayPlan | null> {
+  const rows = await db
+    .select()
+    .from(dayPlans)
+    .where(
+      and(
+        eq(dayPlans.designer_id, designerId),
+        eq(dayPlans.client_id, clientId),
+        eq(dayPlans.kind, kind as "reel" | "poster"),
+        inArray(dayPlans.status, ["pending", "in_progress"]),
+      ),
+    )
+    .orderBy(dayPlans.date)
+    .limit(10)
+  return (
+    rows.find((r) => (r.done_qty ?? 0) < (r.qty ?? 1)) ?? null
+  )
+}
+
 export async function listOpenTasksBefore(
   date: string,
 ): Promise<DbDayPlan[]> {

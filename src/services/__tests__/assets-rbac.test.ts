@@ -30,6 +30,7 @@ const mocks = vi.hoisted(() => ({
   logAuditEvent: vi.fn(),
   markDayPlanDone: vi.fn(),
   getDayPlanById: vi.fn(),
+  findOpenTaskForUpload: vi.fn(),
   getActiveCycleForClientService: vi.fn(),
   getNextAssetNumber: vi.fn(),
   generateAssetTitle: vi.fn(),
@@ -109,6 +110,7 @@ vi.mock("@/services/day-plans-service", () => ({
 // oxlint-disable-next-line anti-slop/no-module-mocking  // test mock
 vi.mock("@/repositories/day-plans-repository", () => ({
   getDayPlanById: mocks.getDayPlanById,
+  findOpenTaskForUpload: mocks.findOpenTaskForUpload,
 }))
 // oxlint-disable-next-line anti-slop/no-module-mocking  // test mock
 vi.mock("@/services/numbering-service", () => ({

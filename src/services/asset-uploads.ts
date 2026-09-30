@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/auth"
 import { emitEvent } from "@/lib/event-bus"
 import { sendAssetUploadNotification, sendRevisionUploadNotification } from "@/lib/notifications/mailgun"
 import { insertAssetRevision } from "@/repositories/asset-revisions-repository"
-import { getDayPlanById } from "@/repositories/day-plans-repository"
+import { findOpenTaskForUpload, getDayPlanById } from "@/repositories/day-plans-repository"
 import { markUploadSessionComplete } from "@/repositories/upload-sessions-repository"
 import { getAssetById, updateAsset as updateAssetRow } from "@/repositories/assets-repository"
 import { getClientById } from "@/repositories/clients-repository"
@@ -203,6 +203,8 @@ export async function finalizeAssetUpload(
 
   // Day-plan link: stamp the cycle so client deliverable counts see this
   // asset, then tick the task. Best-effort — never blocks the upload.
+  // Without an explicit link, auto-match the oldest open task for this
+  // uploader + client + kind so untagged uploads still count.
   let linkedDayPlanId: string | null = null
   if (input.dayPlanId) {
     try {
@@ -229,6 +231,35 @@ export async function finalizeAssetUpload(
       console.warn("[upload][dayplan-link-failed]", {
         assetId,
         dayPlanId: input.dayPlanId,
+        message: error instanceof Error ? error.message : "Unknown error",
+      })
+    }
+  } else {
+    try {
+      const match = await findOpenTaskForUpload(
+        user.id,
+        asset.client_id,
+        asset.type,
+      )
+      if (match) {
+        linkedDayPlanId = match.id
+        console.info("[upload][dayplan-auto-matched]", {
+          assetId,
+          dayPlanId: match.id,
+        })
+        if (!asset.cycle_id) {
+          const cycleId =
+            match.cycle_id ??
+            (await getActiveCycleForClientService(asset.client_id))?.id ??
+            null
+          if (cycleId) {
+            updates.cycle_id = cycleId
+          }
+        }
+      }
+    } catch (error) {
+      console.warn("[upload][dayplan-auto-match-failed]", {
+        assetId,
         message: error instanceof Error ? error.message : "Unknown error",
       })
     }
