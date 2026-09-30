@@ -4,6 +4,25 @@ import { uploadSessions } from "@/db/schema"
 
 export type DbUploadSession = typeof uploadSessions.$inferSelect
 
+export async function markUploadSessionComplete(
+  assetId: string,
+  r2Key: string,
+): Promise<void> {
+  const all = await db
+    .select()
+    .from(uploadSessions)
+    .where(eq(uploadSessions.asset_id, assetId))
+    .orderBy(desc(uploadSessions.created_at))
+    .limit(10)
+  const hit = all.find((s) => s.r2_key === r2Key)
+  if (hit) {
+    await db
+      .update(uploadSessions)
+      .set({ status: "completed" })
+      .where(eq(uploadSessions.id, hit.id))
+  }
+}
+
 export async function getUploadSessionById(
   id: string,
 ): Promise<DbUploadSession | null> {

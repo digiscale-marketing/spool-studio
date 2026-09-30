@@ -355,7 +355,10 @@ export async function updateAsset(
 
   const updates: Partial<typeof contentAssets.$inferInsert> = {}
   if (input.clientId !== undefined) updates.client_id = input.clientId
-  if (input.title !== undefined) updates.title = input.title
+  // Empty titles never wipe: auto-titles and renames survive blank saves.
+  if (input.title !== undefined && input.title.trim() !== "") {
+    updates.title = input.title
+  }
   if (input.type !== undefined) updates.type = input.type
   if (input.status !== undefined) updates.status = input.status
   if (input.driveFileUrl !== undefined)

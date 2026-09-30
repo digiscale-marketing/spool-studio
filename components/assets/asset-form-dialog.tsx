@@ -231,6 +231,15 @@ export function AssetFormDialog({
     if (!open) {
       return
     }
+    // Fresh session on every open: programmatic setOpen(false) after a
+    // successful upload never fires onOpenChange, so stale createdId here
+    // used to funnel the NEXT upload into the previous asset as a revision.
+    setCreatedId(null)
+    setDayPlanId(null)
+    setSelectedFile(null)
+    setUploadState("idle")
+    setUploadError(null)
+    setUploadProgress(0)
     form.reset({
       title: asset?.title ?? "",
       clientId: asset?.clientId ?? "",
@@ -557,6 +566,17 @@ export function AssetFormDialog({
                   }
                   onChange={(event) => {
                     const file = event.target.files?.[0] ?? null
+                    // A different file after an attempt means a different
+                    // asset — drop the reused row so nothing gets overwritten.
+                    if (
+                      file &&
+                      selectedFile &&
+                      (file.name !== selectedFile.name ||
+                        file.size !== selectedFile.size) &&
+                      createdId
+                    ) {
+                      setCreatedId(null)
+                    }
                     setSelectedFile(file)
                     setUploadState("idle")
                     setUploadError(null)

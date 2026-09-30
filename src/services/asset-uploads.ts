@@ -6,6 +6,7 @@ import { emitEvent } from "@/lib/event-bus"
 import { sendAssetUploadNotification, sendRevisionUploadNotification } from "@/lib/notifications/mailgun"
 import { insertAssetRevision } from "@/repositories/asset-revisions-repository"
 import { getDayPlanById } from "@/repositories/day-plans-repository"
+import { markUploadSessionComplete } from "@/repositories/upload-sessions-repository"
 import { getAssetById, updateAsset as updateAssetRow } from "@/repositories/assets-repository"
 import { getClientById } from "@/repositories/clients-repository"
 import { logAssetActivity } from "@/services/activity-service"
@@ -384,6 +385,12 @@ export async function finalizeAssetUpload(
         message: error instanceof Error ? error.message : "Unknown error",
       })
     }
+  }
+
+  try {
+    await markUploadSessionComplete(assetId, input.uploadResult.key)
+  } catch {
+    // Session bookkeeping never blocks the upload.
   }
 
   if (isRevisionUpload) {
