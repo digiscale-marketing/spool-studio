@@ -177,19 +177,13 @@ export function DayPlanDialog({
 
   const carryForward = async (task: DayPlan) => {
     try {
-      await dayPlansApi.create({
-        date,
-        designerId: task.designerId,
-        clientId: task.clientId,
-        cycleId: task.cycleId ?? undefined,
-        kind: task.kind,
-        qty: task.qty,
-        referenceIds: task.referenceIds,
-      })
+      // Move (not copy): the task leaves the overdue list and lands on the
+      // picked date, so it never shows twice.
+      await dayPlansApi.update(task.id, { date })
       onSaved()
       pendingQuery.refetch()
       dayQuery.refetch()
-      toast({ title: `Carried into ${date}` })
+      toast({ title: `Moved into ${date}` })
     } catch (error) {
       toast({
         title: error instanceof Error ? error.message : "Failed to carry over",
