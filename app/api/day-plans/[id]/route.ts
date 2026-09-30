@@ -23,7 +23,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const body = await readJsonBody(request)
     const dayPlanUpdateSchema = z.object({
-      status: z.enum(["pending", "in_progress", "done"]).optional(),
+      status: z.enum(["pending", "in_progress", "done", "cancelled"]).optional(),
       qty: z.number().int().min(1).max(20).optional(),
       kind: z.enum(["reel", "poster"]).optional(),
       referenceIds: z.array(z.string().uuid()).optional(),

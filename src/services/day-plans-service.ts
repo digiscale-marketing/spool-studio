@@ -23,7 +23,12 @@ import type {
   DayRecommendation,
 } from "@/types/index"
 
-const validStatuses: DayPlanStatus[] = ["pending", "in_progress", "done"]
+const validStatuses: DayPlanStatus[] = [
+  "pending",
+  "in_progress",
+  "done",
+  "cancelled",
+]
 
 function mapRow(row: DbDayPlan): DayPlan {
   return {

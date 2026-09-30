@@ -26,6 +26,7 @@ const statusColor: Record<DayPlan["status"], string> = {
   pending: "text-zinc-400 bg-zinc-400/10",
   in_progress: "text-blue-400 bg-blue-400/10",
   done: "text-emerald-400 bg-emerald-400/10",
+  cancelled: "text-red-400 bg-red-400/10",
 }
 
 export function DayPlanTab({ clients }: { clients: Client[] }) {
@@ -110,6 +111,18 @@ export function DayPlanTab({ clients }: { clients: Client[] }) {
     }
   }
 
+  const setStatus = async (task: DayPlan, status: DayPlan["status"]) => {
+    try {
+      await dayPlansApi.update(task.id, { status })
+      refresh()
+    } catch (error) {
+      toast({
+        title: error instanceof Error ? error.message : "Failed to update",
+        variant: "destructive",
+      })
+    }
+  }
+
   const advance = async (task: DayPlan) => {
     const next =
       task.status === "pending"
@@ -118,15 +131,7 @@ export function DayPlanTab({ clients }: { clients: Client[] }) {
           ? "done"
           : null
     if (!next) return
-    try {
-      await dayPlansApi.update(task.id, { status: next })
-      refresh()
-    } catch (error) {
-      toast({
-        title: error instanceof Error ? error.message : "Failed to update",
-        variant: "destructive",
-      })
-    }
+    await setStatus(task, next)
   }
 
   const remove = async (id: string) => {
@@ -204,15 +209,37 @@ export function DayPlanTab({ clients }: { clients: Client[] }) {
         </Badge>
         {isAdmin && (
           <>
-            {t.status !== "done" && (
+            {t.status === "cancelled" ? (
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => advance(t)}
+                onClick={() => setStatus(t, "pending")}
                 className="h-7 border-[rgba(255,255,255,0.08)] bg-transparent text-[11px] text-white hover:bg-[rgba(255,255,255,0.06)]"
               >
-                {t.status === "pending" ? "Start" : "Done"}
+                Restore
               </Button>
+            ) : (
+              <>
+                {t.status !== "done" && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => advance(t)}
+                    className="h-7 border-[rgba(255,255,255,0.08)] bg-transparent text-[11px] text-white hover:bg-[rgba(255,255,255,0.06)]"
+                  >
+                    {t.status === "pending" ? "Start" : "Done"}
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setStatus(t, "cancelled")}
+                  title="Remove from plan (kept, restorable)"
+                  className="h-7 border-[rgba(255,255,255,0.08)] bg-transparent text-[11px] text-amber-400 hover:bg-[rgba(255,255,255,0.06)]"
+                >
+                  Cancel
+                </Button>
+              </>
             )}
             <Button
               size="sm"
@@ -229,6 +256,7 @@ export function DayPlanTab({ clients }: { clients: Client[] }) {
               size="sm"
               variant="outline"
               onClick={() => remove(t.id)}
+              title="Delete permanently"
               className="h-7 border-[rgba(255,255,255,0.08)] bg-transparent text-[11px] text-red-400 hover:bg-[rgba(255,255,255,0.06)]"
             >
               ×
@@ -303,8 +331,9 @@ export function DayPlanTab({ clients }: { clients: Client[] }) {
 
       {designers.map((d) => {
         const mine = tasks.filter((t) => t.designerId === d.id)
-        const doneUnits = mine.reduce((s, t) => s + Math.min(t.doneQty, t.qty), 0)
-        const totalUnits = mine.reduce((s, t) => s + t.qty, 0)
+        const live = mine.filter((t) => t.status !== "cancelled")
+        const doneUnits = live.reduce((s, t) => s + Math.min(t.doneQty, t.qty), 0)
+        const totalUnits = live.reduce((s, t) => s + t.qty, 0)
         const reels = mine.reduce((s, t) => s + (t.kind === "reel" ? t.qty : 0), 0)
         const posters = mine.reduce(
           (s, t) => s + (t.kind === "poster" ? t.qty : 0),

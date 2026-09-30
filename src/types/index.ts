@@ -176,7 +176,7 @@ export interface CreateCycleInput {
   alreadyPublishedPosters?: number
 }
 
-export type DayPlanStatus = "pending" | "in_progress" | "done"
+export type DayPlanStatus = "pending" | "in_progress" | "done" | "cancelled"
 
 export interface DayPlan {
   id: string
