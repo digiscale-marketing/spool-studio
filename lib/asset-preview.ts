@@ -4,6 +4,7 @@ import type { Asset, AssetRevision } from "@/types/index"
 
 export interface AssetPreviewDescriptor {
   title: string
+  assetId?: string | null
   mimeType?: string | null
   fileExtension?: string | null
   driveFileId?: string | null
@@ -35,7 +36,11 @@ export function getAssetPreviewUrls(
     openUrl: url,
     previewUrl: url,
     viewUrl: url,
-    downloadUrl: url,
+    // Short app link (redirects to a fresh presigned URL with the asset
+    // filename) instead of leaking the long signed R2 URL.
+    downloadUrl: input.assetId
+      ? `/api/assets/${input.assetId}/download`
+      : url,
     directMediaUrl:
       previewType === "image"
         ? (sanitizeFileUrl(input.thumbnailUrl) ?? url)
@@ -47,6 +52,7 @@ export function toAssetPreviewDescriptor(
   item:
     | Pick<
         Asset,
+        | "id"
         | "title"
         | "mimeType"
         | "fileExtension"
@@ -58,6 +64,7 @@ export function toAssetPreviewDescriptor(
       >
     | (Pick<
         AssetRevision,
+        | "assetId"
         | "mimeType"
         | "driveFileId"
         | "driveFileUrl"
@@ -71,6 +78,7 @@ export function toAssetPreviewDescriptor(
 ): AssetPreviewDescriptor {
   return {
     title: item.title,
+    assetId: "assetId" in item ? item.assetId : item.id,
     mimeType: item.mimeType ?? null,
     fileExtension:
       "fileExtension" in item ? (item.fileExtension ?? null) : null,

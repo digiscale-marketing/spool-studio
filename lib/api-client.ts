@@ -1047,6 +1047,31 @@ export const storageApi = {
   },
 }
 
+export interface PortalTokenInfo {
+  id: string
+  client_id: string
+  client_name?: string
+  token?: string
+  expires_at: string
+  created_at: string
+}
+
+export const portalApi = {
+  listTokens: async (): Promise<PortalTokenInfo[]> => {
+    return fetchJson<PortalTokenInfo[]>("/api/portal/token")
+  },
+
+  createToken: async (
+    clientId: string,
+    expiresInDays = 30,
+  ): Promise<PortalTokenInfo> => {
+    return fetchJson<PortalTokenInfo>("/api/portal/token", {
+      method: "POST",
+      body: JSON.stringify({ clientId, expiresInDays }),
+    })
+  },
+}
+
 export const kanbanApi = {
   getBoard: async (): Promise<{
     assets: Asset[]

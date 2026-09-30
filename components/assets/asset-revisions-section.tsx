@@ -163,6 +163,7 @@ export function AssetRevisionsSection({
                   : "Unknown"
                 const revisionPreviewItem = toAssetPreviewDescriptor({
                   title: `Revision v${versionLabel}`,
+                  assetId: rev.assetId,
                   mimeType: rev.mimeType,
                   driveFileId: rev.driveFileId,
                   driveFileUrl: rev.driveFileUrl,

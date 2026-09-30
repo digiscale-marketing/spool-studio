@@ -17,6 +17,7 @@ import {
   Pin,
   Plus,
   RefreshCw,
+  Share2,
   Shield,
   Trash2,
   Users,
@@ -28,6 +29,7 @@ import { useEffect, useMemo, useState } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { AssetCard } from "@/components/assets/asset-card"
 import { ClientFormDialog } from "@/components/clients/client-form-dialog"
+import { SharePortalDialog } from "@/components/clients/share-portal-dialog"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -688,6 +690,21 @@ export function ClientDetail({
             }
           />
 
+          {currentUser?.role === "admin" && (
+            <SharePortalDialog
+              clientId={client.id}
+              clientName={client.name}
+              trigger={
+                <Button
+                  variant="outline"
+                  className="h-9 rounded-md border border-emerald-500/30 bg-transparent px-3 text-[13px] font-medium text-emerald-400 shadow-none hover:border-emerald-500/50 hover:bg-emerald-500/10 hover:text-emerald-300"
+                >
+                  <Share2 className="mr-2 h-4 w-4" />
+                  Share
+                </Button>
+              }
+            />
+          )}
           {currentUser?.role === "admin" && (
             <Button
               variant="outline"

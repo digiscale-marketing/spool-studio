@@ -72,6 +72,7 @@ export function RevisionPanel({ revisions, assetTitle }: RevisionPanelProps) {
           const revisionNote = revision.changeNote ?? "Revision upload"
           const previewDescriptor = toAssetPreviewDescriptor({
             title: `${assetTitle} v${versionLabel}`,
+            assetId: revision.assetId,
             mimeType: revision.mimeType,
             driveFileId: revision.driveFileId,
             driveFileUrl: revision.driveFileUrl,

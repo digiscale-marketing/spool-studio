@@ -119,6 +119,7 @@ async function getPresignedUploadUrl(
 async function getPresignedDownloadUrl(
   key: string,
   expiresIn?: number,
+  filename?: string,
 ): Promise<string> {
   const client = getR2Client()
   const bucketName = getR2BucketName()
@@ -128,6 +129,9 @@ async function getPresignedDownloadUrl(
     const command = new GetObjectCommand({
       Bucket: bucketName,
       Key: key,
+      ...(filename
+        ? { ResponseContentDisposition: `attachment; filename="${filename}"` }
+        : {}),
     })
 
     const url = await getSignedUrl(client, command, { expiresIn: ttl })

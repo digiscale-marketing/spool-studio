@@ -492,7 +492,7 @@ export default function AssetDetailPage() {
                     className="h-10 w-full border-[rgba(255,255,255,0.1)] bg-transparent px-3 text-[13px] text-white hover:bg-[rgba(255,255,255,0.06)] sm:h-9 sm:w-auto"
                     onClick={() => {
                       void navigator.clipboard.writeText(
-                        asset.driveFileUrl ?? "",
+                        `${window.location.origin}/api/assets/${asset.id}/download`,
                       )
                       toast({ title: "Link copied" })
                     }}
@@ -800,7 +800,7 @@ export default function AssetDetailPage() {
                     className="h-9 border-[rgba(255,255,255,0.1)] bg-transparent px-3 text-[13px] text-white hover:bg-[rgba(255,255,255,0.06)]"
                     onClick={() => {
                       void navigator.clipboard.writeText(
-                        asset.driveFileUrl ?? "",
+                        `${window.location.origin}/api/assets/${asset.id}/download`,
                       )
                       toast({ title: "Link copied" })
                     }}
