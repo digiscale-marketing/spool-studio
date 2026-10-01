@@ -57,6 +57,8 @@ export interface DashboardSummary {
   totalReelsPublished: number
   totalPostersPlanned: number
   totalPostersPublished: number
+  weeklyReelsPublished: number
+  weeklyPostersPublished: number
   publishedContentCount: number
   completionPercentage: number
   clientPerformance: ClientPerformanceItem[]
@@ -251,8 +253,12 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
   let upcomingUploads = 0
   let uploadedThisMonth = 0
   let approvedAssets = 0
-  let _totalReelsPublished = 0 // weekly
-  let _totalPostersPublished = 0 // weekly
+  // Completed counts come from asset rows (source of truth), never from the
+  // denormalized client counters (nothing keeps those in sync).
+  let publishedReelsAll = 0
+  let publishedPostersAll = 0
+  let weeklyReelsPublished = 0
+  let weeklyPostersPublished = 0
   let publishedContentCount = 0 // all time
 
   const bucketCounts = new Map<
@@ -300,16 +306,19 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
 
     if (asset.status === "published") {
       publishedContentCount += 1 // all time
-    }
-
-    // Weekly published counts for Reels & Posters
-    if (asset.status === "published" && asset.created_at) {
-      const created = new Date(asset.created_at)
-      if (created >= weekStart && created <= now) {
+      if (asset.type === "reel") {
+        publishedReelsAll += 1
+      } else if (asset.type === "poster") {
+        publishedPostersAll += 1
+      }
+      const publishedAt = asset.published_at
+        ? new Date(asset.published_at)
+        : null
+      if (publishedAt && publishedAt >= weekStart && publishedAt <= now) {
         if (asset.type === "reel") {
-          _totalReelsPublished += 1
+          weeklyReelsPublished += 1
         } else if (asset.type === "poster") {
-          _totalPostersPublished += 1
+          weeklyPostersPublished += 1
         }
       }
     }
@@ -418,9 +427,11 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     ).slice(0, 50),
     totalDeliverables,
     totalReelsPlanned,
-    totalReelsPublished: totalReelsCompleted,
+    totalReelsPublished: publishedReelsAll,
     totalPostersPlanned,
-    totalPostersPublished: totalPostersCompleted,
+    totalPostersPublished: publishedPostersAll,
+    weeklyReelsPublished,
+    weeklyPostersPublished,
     publishedContentCount,
     completionPercentage,
     clientPerformance,

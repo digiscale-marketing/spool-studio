@@ -78,6 +78,8 @@ export interface DashboardSummaryData {
   totalReelsPublished: number
   totalPostersPlanned: number
   totalPostersPublished: number
+  weeklyReelsPublished: number
+  weeklyPostersPublished: number
   publishedContentCount: number
   completionPercentage: number
   clientPerformance: ClientPerformanceItem[]

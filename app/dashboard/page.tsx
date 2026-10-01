@@ -76,11 +76,15 @@ export default function DashboardPage() {
   const deliverablesStats = useMemo(() => {
     let plannedReels = 0, completedReels = 0, plannedPosters = 0, completedPosters = 0
     for (const c of clients) {
-      if (timeframe === "weekly") { plannedReels += c.weeklyReelGoal ?? 0; completedReels += c.weeklyCompletedReels ?? 0; plannedPosters += c.weeklyPosterGoal ?? 0; completedPosters += c.weeklyCompletedPosters ?? 0 }
-      else { plannedReels += c.monthlyReelsTarget ?? 0; completedReels += c.completedReels ?? 0; plannedPosters += c.monthlyPostsTarget ?? 0; completedPosters += c.completedPosters ?? 0 }
+      if (timeframe === "weekly") { plannedReels += c.weeklyReelGoal ?? 0; plannedPosters += c.weeklyPosterGoal ?? 0 }
+      else { plannedReels += c.monthlyReelsTarget ?? 0; plannedPosters += c.monthlyPostsTarget ?? 0 }
     }
+    // Completed always comes from published assets (source of truth), never
+    // from the denormalized client counters.
+    if (timeframe === "weekly") { completedReels = summary?.weeklyReelsPublished ?? 0; completedPosters = summary?.weeklyPostersPublished ?? 0 }
+    else { completedReels = summary?.totalReelsPublished ?? 0; completedPosters = summary?.totalPostersPublished ?? 0 }
     return { reels: { planned: plannedReels, completed: completedReels, remaining: Math.max(0, plannedReels - completedReels), pct: plannedReels > 0 ? Math.round((completedReels / plannedReels) * 100) : 0 }, posters: { planned: plannedPosters, completed: completedPosters, remaining: Math.max(0, plannedPosters - completedPosters), pct: plannedPosters > 0 ? Math.round((completedPosters / plannedPosters) * 100) : 0 } }
-  }, [clients, timeframe])
+  }, [clients, timeframe, summary])
   const publishedContentCount = summary?.publishedContentCount ?? 0
   const storageUsedGb = (storage?.usedBytes ?? 0) / 1024 ** 3
   const storageQuotaGb = (storage?.quotaBytes ?? 10 * 1024 ** 3) / 1024 ** 3
