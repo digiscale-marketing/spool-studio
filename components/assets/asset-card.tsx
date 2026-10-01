@@ -131,13 +131,11 @@ function AssetCardImpl({ asset, onThumbnailClick, usersById }: AssetCardProps) {
 
   const copyDriveLink = async () => {
     try {
-      const shareUrl =
-        asset.driveFileUrl ??
-        `${window.location.origin}/dashboard/assets/${asset.id}`
+      const shareUrl = `${window.location.origin}/api/assets/${asset.id}/download?view=1`
       await navigator.clipboard.writeText(shareUrl)
       toast({ title: "Link copied" })
     } catch {
-      toast({ title: "Failed to copy link", variant: "destructive" })
+      window.prompt("Copy this link:", `${window.location.origin}/api/assets/${asset.id}/download?view=1`)
     }
   }
 
@@ -340,6 +338,14 @@ function AssetCardImpl({ asset, onThumbnailClick, usersById }: AssetCardProps) {
                   className="cursor-pointer text-white focus:bg-[rgba(255,255,255,0.06)] focus:text-white"
                 >
                   Copy Link
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    window.location.href = `/api/assets/${asset.id}/download`
+                  }}
+                  className="cursor-pointer text-white focus:bg-[rgba(255,255,255,0.06)] focus:text-white"
+                >
+                  Download Asset
                 </DropdownMenuItem>
                 <>
                   <DropdownMenuSeparator className="bg-[rgba(255,255,255,0.08)]" />

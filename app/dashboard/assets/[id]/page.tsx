@@ -428,11 +428,21 @@ export default function AssetDetailPage() {
                       }
                     />
                     <DropdownMenuSeparator className="bg-[rgba(255,255,255,0.08)]" />
-                    <DropdownMenuItem className="cursor-pointer text-white focus:bg-[rgba(255,255,255,0.06)] focus:text-white">
+                    <DropdownMenuItem
+                      className="cursor-pointer text-white focus:bg-[rgba(255,255,255,0.06)] focus:text-white"
+                      onSelect={() => {
+                        window.location.href = `/api/assets/${asset.id}/download`
+                      }}
+                    >
                       Download Asset
                     </DropdownMenuItem>
                     <DropdownMenuSeparator className="bg-[rgba(255,255,255,0.08)]" />
-                    <DropdownMenuItem className="cursor-pointer text-white focus:bg-[rgba(255,255,255,0.06)] focus:text-white">
+                    <DropdownMenuItem
+                      className="cursor-pointer text-white focus:bg-[rgba(255,255,255,0.06)] focus:text-white"
+                      onSelect={() => {
+                        void copyViewLink()
+                      }}
+                    >
                       Share
                     </DropdownMenuItem>
                     {currentUser?.role === "admin" && (
