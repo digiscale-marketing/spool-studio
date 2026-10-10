@@ -71,6 +71,11 @@ const navigationSections = [
         icon: Calendar,
       },
       {
+        label: "Analytics",
+        href: "/dashboard/analytics",
+        icon: BarChart3,
+      },
+      {
         label: "Logs",
         href: "/dashboard/logs",
         icon: ClipboardList,

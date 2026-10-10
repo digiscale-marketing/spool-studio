@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, ilike, lte, or, sql } from "drizzle-orm"
+import { and, desc, eq, gte, ilike, inArray, lte, or, sql } from "drizzle-orm"
 import { db } from "@/db"
 import { auditLogs } from "@/db/schema"
 
@@ -113,4 +113,31 @@ export async function getAuditLogById(id: string): Promise<DbAuditLog | null> {
     .where(eq(auditLogs.id, id))
     .limit(1)
   return rows[0] ?? null
+}
+
+/**
+ * Revision requests (`asset_rejected`) against the given assets since a date.
+ * This is the "we sent it back" event — one row per rejection.
+ */
+export async function listAssetRejectionsSince(
+  assetIds: string[],
+  since: Date,
+): Promise<Array<{ assetId: string; createdAt: Date }>> {
+  if (assetIds.length === 0) return []
+  const rows = await db
+    .select({
+      assetId: auditLogs.entity_id,
+      createdAt: auditLogs.created_at,
+    })
+    .from(auditLogs)
+    .where(
+      and(
+        eq(auditLogs.action, "asset_rejected"),
+        inArray(auditLogs.entity_id, assetIds),
+        gte(auditLogs.created_at, since),
+      ),
+    )
+  return rows
+    .filter((r) => r.assetId !== null)
+    .map((r) => ({ assetId: r.assetId as string, createdAt: r.createdAt }))
 }

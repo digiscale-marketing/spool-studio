@@ -1035,6 +1035,35 @@ export interface StorageUsageData {
   objects: number
 }
 
+export interface DesignerTypeStats {
+  uploads: number
+  revisions: number
+  published: number
+  revisionRate: number
+}
+
+export interface DesignerAnalyticsRow {
+  userId: string
+  name: string
+  reels: DesignerTypeStats
+  posters: DesignerTypeStats
+  uploads: number
+  revisions: number
+  revisionRate: number
+  published: number
+  approved: number
+  avgApprovalLagHours: number | null
+}
+
+export const analyticsApi = {
+  designers: async (days = 10): Promise<{ days: number; rows: DesignerAnalyticsRow[] }> => {
+    const data = await fetchJson<{ days: number; rows: DesignerAnalyticsRow[] }>(
+      `/api/analytics/designers?days=${days}`,
+    )
+    return data
+  },
+}
+
 export const storageApi = {
   getUsage: async (): Promise<StorageUsageData> => {
     return fetchJsonDeduped<StorageUsageData>("/api/storage/usage")

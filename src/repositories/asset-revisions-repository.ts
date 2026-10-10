@@ -1,8 +1,21 @@
-import { desc, eq } from "drizzle-orm"
+import { and, desc, eq, gte, inArray } from "drizzle-orm"
 import { db } from "@/db"
 import { assetRevisions } from "@/db/schema"
 
 export type DbAssetRevision = typeof assetRevisions.$inferSelect
+
+export async function listRevisionsForAssetsSince(
+  assetIds: string[],
+  since?: Date,
+): Promise<DbAssetRevision[]> {
+  if (assetIds.length === 0) return []
+  const conditions = [inArray(assetRevisions.asset_id, assetIds)]
+  if (since) conditions.push(gte(assetRevisions.uploaded_at, since))
+  return db
+    .select()
+    .from(assetRevisions)
+    .where(and(...conditions))
+}
 
 export async function listAssetRevisionsByAssetId(
   assetId: string,
