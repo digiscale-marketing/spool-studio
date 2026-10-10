@@ -1,4 +1,4 @@
-import { and, desc, eq, ilike, inArray, sql } from "drizzle-orm"
+import { and, desc, eq, gte, ilike, inArray, sql } from "drizzle-orm"
 import { db } from "@/db"
 import { contentAssets } from "@/db/schema"
 import type { AssetStatus } from "@/types/index"
@@ -186,6 +186,23 @@ export async function listAssetsByClientId(
     .where(eq(contentAssets.client_id, clientId))
     .orderBy(desc(contentAssets.updated_at))
     .limit(limit)
+  return rows
+}
+
+export async function listAssetsByUploaderSince(
+  userId: string,
+  since: Date,
+): Promise<DbAsset[]> {
+  const rows = await db
+    .select()
+    .from(contentAssets)
+    .where(
+      and(
+        eq(contentAssets.uploaded_by, userId),
+        gte(contentAssets.uploaded_at, since),
+      ),
+    )
+    .orderBy(desc(contentAssets.uploaded_at))
   return rows
 }
 
